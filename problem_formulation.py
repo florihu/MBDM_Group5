@@ -44,9 +44,9 @@ def get_model_for_problem_formulation(problem_formulation_id):
                              problem formulations differ with respect to the objectives
                              0: Total cost, and casualties
                              1: Expected damages, costs, and casualties
-                             2: expected damages, dike investment costs, rfr costs, evacuation cost, and casualties
+                             2: expected damages, dike investment costs, rfr costs, evacuation cost, and casualties (choose this)
                              3: costs and casualties disaggregated over dike rings, and room for the river and evacuation costs
-                             4: Expected damages, dike investment cost and casualties disaggregated over dike rings and room for the river and evacuation costs
+                             4: Expected damages, dike investment cost and casualties disaggregated over dike rings and room for the river and evacuation costs (choose this)
                              5: disaggregate over time and space
 
     Notes
