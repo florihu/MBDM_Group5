@@ -39,6 +39,7 @@ def get_stat_par(outcomes, policies):
 
         Kurtosis: Kurtosis measures the peakedness or flatness of a distribution. Higher kurtosis values indicate more extreme tails and a sharper peak, while lower values indicate lighter tails and a flatter peak.
 
+        A confidence interval for a mean is a range of values that is likely to contain a population mean with a certain level of confidence.
     """
 
     outcome_adj = outcomes
@@ -48,7 +49,7 @@ def get_stat_par(outcomes, policies):
     pol_dict = {}
 
     for policy in policies.cat.categories:
-        pol_dict[policy] = pd.DataFrame(index=['mean', 'mode', 'median', 'stdev', 'min', 'max', 'range', 'iqr', 'first_q', 'third_q','Quartile distance', 'skewness', 'kurtosis'])
+        pol_dict[policy] = pd.DataFrame(index=['mean', 'mode', 'median', 'stdev', 'min', 'max', 'range', 'iqr', 'first_q', 'third_q','Quartile distance', 'skewness', 'kurtosis', '95% conf int'])
 
         # Group the DataFrame by 'policies' column
         policy_group = outcome_adj_df.groupby('policies')
@@ -68,8 +69,8 @@ def get_stat_par(outcomes, policies):
             third_q = np.percentile(data, 75, interpolation = 'midpoint')
             qd = iqr / 2
             skewness = stats.skew(data)
-            #kurtosis
             kurtosis = stats.kurtosis(data)
-            pol_dict[policy][item] = [mean, mode, median, stdev, minimum, maximum, range_stat, iqr, first_q, third_q, qd, skewness, kurtosis]
+            conf_int = stats.t.interval(alpha=0.95, df=len(data) - 1, loc=mean, scale=stdev)
+            pol_dict[policy][item] = [mean, mode, median, stdev, minimum, maximum, range_stat, iqr, first_q, third_q, qd, skewness, kurtosis, conf_int]
 
     return pol_dict
