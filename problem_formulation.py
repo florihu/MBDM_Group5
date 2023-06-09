@@ -133,6 +133,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
     # Problem formulations:
     # Outcomes are all costs, thus they have to minimized:
     direction = ScalarOutcome.MINIMIZE
+    direction_max = ScalarOutcome.MAXIMIZE
 
     # 2-objective PF:
     if problem_formulation_id == 0:
@@ -222,6 +223,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
         evac_cost_variables = []
         casuality_varaibles = []
 
+
         damage_variables.extend(
             [f"{dike}_Expected Annual Damage" for dike in function.dikelist]
         )
@@ -233,6 +235,7 @@ def get_model_for_problem_formulation(problem_formulation_id):
         casuality_varaibles.extend(
             [f"{dike}_Expected Number of Deaths" for dike in function.dikelist]
         )
+
 
         dike_model.outcomes = [
             ScalarOutcome(
@@ -265,6 +268,18 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 function=sum_over,
                 kind=direction,
             ),
+            ScalarOutcome(
+                "Min Water Level Rise",
+                variable_name="minimum_wl",
+                #function=sum_over,
+                kind=direction_max,
+            ),
+            ScalarOutcome(
+                "Max Water Level Rise",
+                variable_name="maximum_wl",
+                # function=sum_over,
+                kind=direction_max,
+            )
         ]
 
     # Disaggregate over locations:

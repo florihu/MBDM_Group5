@@ -17,9 +17,7 @@ from funs_hydrostat import werklijn_cdf, werklijn_inv
 
 
 def Muskingum(C1, C2, C3, Qn0_t1, Qn0_t0, Qn1_t0):
-    """Simulates hydrological routing
-
-    """
+    """Simulates hydrological routing"""
     Qn1_t1 = C1 * Qn0_t1 + C2 * Qn0_t0 + C3 * Qn1_t0
     return Qn1_t1
 
@@ -32,13 +30,14 @@ class DikeNetwork:
 
         # load network
         G, dike_list, dike_branch, planning_steps = funs_generate_network.get_network(
-            self.num_planning_steps
+            num_events=self.num_events, plann_steps_max=self.num_planning_steps,
         )
 
         # Load hydrological statistics:
         self.A = pd.read_excel("./data/hydrology/werklijn_params.xlsx")
 
         lowQ, highQ = werklijn_inv([0.992, 0.99992], self.A)
+        # TODO: by changing the num_events we can introduce climate change
         self.Qpeaks = np.unique(
             np.asarray(
                 [np.random.uniform(lowQ, highQ) / 6 for _ in range(0, self.num_events)]
@@ -97,26 +96,21 @@ class DikeNetwork:
     def progressive_height_and_costs(self, G, dikenodes, steps):
         for dike in dikenodes:
             node = G.nodes[dike]
-            print(node.keys())
-            # Rescale according to step and transform in meters
+            # Rescale according to step and tranform in meters
             for s in steps:
-                key = f"DikeIncrease {s}"
-                if key in node:
-                    node[key] *= self.dh
-                else:
-                    # Handle the case when the key is not present
-                    # You can choose to raise an exception, assign a default value, or perform other appropriate actions
-                    # For example:
-                    raise KeyError(f"'{key}' key not found in node dictionary.")
+                node[f"DikeIncrease {s}"] *= self.dh
+                # 1 Initialize fragility curve
+                # 2 Shift it to the degree of dike heigthening:
+                # 3 Calculate cumulative raising
 
-                # Rest of the code
                 node[f"fnew {s}"] = copy.deepcopy(node["f"])
                 node[f"dikeh_cum {s}"] = 0
+
                 for ss in steps[steps <= s]:
                     node[f"fnew {s}"][:, 0] += node[f"DikeIncrease {ss}"]
                     node[f"dikeh_cum {s}"] += node[f"DikeIncrease {ss}"]
 
-                # Calculate dike heigheting costs
+                # Calculate dike heigheting costs:
                 if node[f"DikeIncrease {s}"] == 0:
                     node[f"dikecosts {s}"] = 0
                 else:
@@ -128,8 +122,6 @@ class DikeNetwork:
                         node[f"dikeh_cum {s}"],
                         node[f"DikeIncrease {s}"],
                     )
-
-
 
     def __call__(self, timestep=1, **kwargs):
 
@@ -186,7 +178,7 @@ class DikeNetwork:
         data = defaultdict(list)
 
         for s in self.planning_steps:
-            for Qpeak in Qpeaks:
+            for i, Qpeak in enumerate(Qpeaks):
                 node = G.nodes["A.0"]
                 waveshape_id = node["ID flood wave shape"]
 
@@ -235,6 +227,7 @@ class DikeNetwork:
                             node["wl"][t] = Lookuplin(
                                 node["rnew"], 0, 1, node["Qin"][t]
                             )
+                            node["waterlevels"][i, t-1] = node["wl"][t]
 
                             # Evaluate failure and, in case, Q in the floodplain and
                             # Q left in the river:
@@ -269,11 +262,12 @@ class DikeNetwork:
                         elif node["type"] == "downstream":
                             node["Qin"] = G.nodes[dikelist[n - 1]]["Qout"]
 
+
+
                 # Iterate over the network and store outcomes of interest for a
                 # given event
                 for dike in self.dikelist:
                     node = G.nodes[dike]
-
                     # If breaches occured:
                     if node["status"][-1] == True:
                         # Losses per event:
@@ -300,6 +294,7 @@ class DikeNetwork:
 
             EECosts = []
             # Iterate over the network,compute and store ooi over all events
+            waterlevels = []
             for dike in dikelist:
                 node = G.nodes[dike]
 
@@ -322,8 +317,13 @@ class DikeNetwork:
                 data[f"{dike}_Expected Annual Damage"].append(disc_EAD)
                 data[f"{dike}_Expected Number of Deaths"].append(END)
                 data[f"{dike}_Dike Investment Costs"].append(node[f"dikecosts {s}"])
+                waterlevels.append(np.min(node["waterlevels"]))
+
+            data["minimum_wl"] = min(waterlevels)
+            data["maximum_wl"] = max(waterlevels)
 
             data[f"RfR Total Costs"].append(G.nodes[f"RfR_projects {s}"]["cost"])
             data[f"Expected Evacuation Costs"].append(np.sum(EECosts))
 
         return data
+
