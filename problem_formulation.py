@@ -269,13 +269,13 @@ def get_model_for_problem_formulation(problem_formulation_id):
                 kind=direction,
             ),
             ScalarOutcome(
-                "Min Water Level Rise",
+                "Min Water Level",
                 variable_name="minimum_wl",
                 #function=sum_over,
                 kind=direction_max,
             ),
             ScalarOutcome(
-                "Max Water Level Rise",
+                "Max Water Level",
                 variable_name="maximum_wl",
                 # function=sum_over,
                 kind=direction_max,
