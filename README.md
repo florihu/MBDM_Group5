@@ -9,7 +9,7 @@ The main jupyter notebooks used for the development of the project are numbered 
 - 4-MORDM_2.ipynb
 - 5-GSA.ipynb
 
-Data needed to run the model is included in the **data** folder 
+Data needed to run the model is included in the **data** folder  
 Data outputs from the different jupyter notebooks is included in the **data_output** folder
 
 ## Other considerations: 
